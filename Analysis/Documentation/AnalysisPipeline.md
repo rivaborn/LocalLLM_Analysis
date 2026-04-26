@@ -144,6 +144,57 @@ python C:\Coding\LocalLLM_Analysis\Analysis\AnalysisPipeline.py --start-from 3 -
 | 1    | A worker subprocess exited non-zero, OR `--start-from` exceeds subsection count, OR no subsections found in `.env` |
 | 2    | Unexpected exception (e.g. missing `.env`, missing `architecture/` at rename time, file-system errors)             |
 
+## Choosing a local LLM model
+
+The orchestrator does not read model config — every model decision lives in `Common/.env` and is consumed by the LLM-calling worker scripts (`archgen_local.ps1`, `arch_overview_local.ps1`, `archpass2_local.ps1`). The notes below are practical guidance for picking a model that matches a single-GPU workstation; numbers assume Q4_K_M GGUF quants served by Ollama.
+
+### Recommendation by hardware tier
+
+| Tier                            | Suggested model              | Quant     | VRAM @ 32K ctx | VRAM @ 128K ctx | Notes                                                                                           |
+| ------------------------------- | ---------------------------- | --------- | -------------- | --------------- | ----------------------------------------------------------------------------------------------- |
+| **24 GB VRAM (RTX 3090 / 4090)** | `qwen3-coder:30b`            | Q4_K_M    | ~18 GB         | ~22 GB          | **Default.** MoE with ~3B active params — fast on a 3090, big enough for UE-scale headers.      |
+| 24 GB VRAM (reasoning workload) | `gpt-oss:20b`                | Q4_K_M    | ~13 GB         | ~18 GB          | Reasoning-tuned. Pair with `LLM_THINK=true` for Pass 2 / overview synthesis.                    |
+| 16 GB VRAM (RTX 4080 / 4070 Ti) | `qwen2.5-coder:14b`          | Q5_K_M    | ~11 GB         | ~16 GB          | Dense 14B; clearly below 30B on UE C++ but still solid for CnC-scale codebases.                 |
+| 12 GB VRAM (RTX 3060 / 4070)    | `deepseek-coder-v2:16b-lite` | Q4_K_M    | ~9 GB          | ~13 GB          | MoE, 2.4B active. Fastest of the bunch; quality tradeoff on heavy template metaprogramming.     |
+| 8 GB VRAM                       | `qwen2.5-coder:7b`           | Q4_K_M    | ~6 GB          | ~9 GB           | Acceptable Pass 1 quality at high throughput. Skip Pass 2 synthesis or offload to CPU.          |
+
+KV cache scales linearly with `LLM_NUM_CTX` and roughly linearly with parameter count, so the "@ 128K ctx" column gets tight fast — the table assumes you keep `LLM_ANALYSIS_NUM_CTX` ≤ 65 K on 24 GB cards. Avoid dense 32B coder models (`qwen2.5-coder:32b`, `codestral:22b` at Q5+) on 24 GB — they technically load but leave no room for KV cache during synthesis passes, forcing partial CPU offload (5–10× slower).
+
+### Model selection by pipeline stage
+
+Different stages have different needs and the role-key chain in `Common/llm_core.ps1` (`Get-LLMModel`) lets you wire per-stage overrides:
+
+| Stage                                    | Role key             | What matters                                                                | Suggested model on a 3090                  |
+| ---------------------------------------- | -------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
+| Step 1 — `archgen_local.ps1`             | `LLM_MODEL`          | Symbol-level C++ accuracy; throughput across hundreds of files              | `qwen3-coder:30b`                          |
+| Step 4 — `arch_overview_local.ps1`       | `LLM_MODEL`          | Long-context synthesis across many per-file docs at once                    | `qwen3-coder:30b` (or `gpt-oss:20b` w/ thinking) |
+| Step 6 — `archpass2_local.ps1`           | `LLM_MODEL`          | Cross-cutting reasoning over architecture overview + xref + per-file docs   | `qwen3-coder:30b` (or `gpt-oss:20b` w/ thinking) |
+| (reserved) Reasoning-model synthesis     | `LLM_PLANNING_MODEL` | Deeper chain-of-thought via thinking mode; budgets controlled by `LLM_PLANNING_*` keys | Optional `gpt-oss:20b` or `qwen3:32b` |
+
+Resolution order on every call: role-specific key → `LLM_DEFAULT_MODEL` → hardcoded fallback. The simplest way to change models system-wide is to edit `LLM_DEFAULT_MODEL` and leave every role key blank.
+
+### Tuning context budgets on 24 GB
+
+The defaults in `Common/.env` are tuned for a 3090:
+
+```
+LLM_DEFAULT_MODEL=qwen3-coder:30b
+LLM_NUM_CTX=32768            # Pass 1 default — per-file analysis
+LLM_ANALYSIS_NUM_CTX=65536   # promoted into LLM_NUM_CTX by Pass 2/overview scripts
+LLM_MAX_TOKENS=8192
+LLM_TIMEOUT=600
+```
+
+`LLM_NUM_CTX > 0` triggers Ollama's `/api/chat` path so the model receives the full window on every call (vs. the OpenAI-compat `/v1/chat/completions` fallback, which uses Ollama's defaults). The three analysis scripts promote `LLM_ANALYSIS_NUM_CTX` into `LLM_NUM_CTX` after loading config, so you only need to bump one knob to change synthesis-pass context.
+
+If `nvidia-smi` shows VRAM saturation during Pass 2, the cheapest knob to turn down is `LLM_ANALYSIS_NUM_CTX` (try 49152). Drop `LLM_NUM_CTX` to 16384 only if Pass 1 itself spills — UE headers up to `MAX_FILE_LINES` need at least a 16K window to fit comfortably with the prompt + output budget.
+
+### Thinking mode
+
+`LLM_THINK=true` turns on reasoning-token output for models that support it (`gpt-oss`, `qwen3`, `deepseek-r1`). `LLM_SAVE_THINKING=true` writes the reasoning to `<output>.thinking.md` sidecars. Both are only effective when `LLM_NUM_CTX > 0` (i.e. on the `/api/chat` path). `Invoke-LocalLLM` detects budget exhaustion mid-`<thinking>` and emits an actionable error pointing at the exact knob to raise.
+
+Don't enable thinking mode for `qwen3-coder` — it's coder-tuned, not reasoning-tuned, and thinking output just eats your token budget without improving structure.
+
 ## Customizing the pipeline
 
 The pipeline order, the `-Preset` value passed to step 1, and which steps use `-TargetDir` are all controlled by the `PIPELINE_STEPS` list at the top of `AnalysisPipeline.py`. To change behavior:
