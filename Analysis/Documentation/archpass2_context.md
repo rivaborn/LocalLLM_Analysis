@@ -28,16 +28,17 @@ large codebases.
 ## Usage
 
 ```powershell
-.\archpass2_context.ps1 [-TargetDir <dir>] [-EnvFile <path>] [-Test]
+.\archpass2_context.ps1 [-TargetDir <dir>] [-EnvFile <path>] [-RepoRoot <path>] [-Test]
 ```
 
 ### CLI Options
 
-| Parameter    | Type   | Default          | Description                                        |
-| ------------ | ------ | ---------------- | -------------------------------------------------- |
-| `-TargetDir` | string | `"."`            | Subdirectory to process. `"."` processes all docs. |
-| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` file.                           |
-| `-Test`      | switch | off              | Run the built-in unit test suite.                  |
+| Parameter    | Type   | Default          | Description                                                                                                                                                                          |
+| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir` | string | `"."`            | Subdirectory to process. `"."` processes all docs.                                                                                                                                   |
+| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` file.                                                                                                                                                             |
+| `-RepoRoot`  | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
+| `-Test`      | switch | off              | Run the built-in unit test suite.                                                                                                                                                    |
 
 ## How It Is Invoked
 

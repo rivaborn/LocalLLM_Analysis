@@ -25,22 +25,23 @@ exporters for CMake, Meson, Ninja, or Bazel.
 ## Usage
 
 ```bash
-python generate_compile_commands.py [--root <path>] [--output <path>]
+python generate_compile_commands.py [--repo-root <path>] [--root <path>] [--output <path>]
 ```
 
 ### CLI Options
 
-| Parameter  | Type | Default                        | Description                                           |
-| ---------- | ---- | ------------------------------ | ----------------------------------------------------- |
-| `--root`   | Path | `.` (current directory)        | Repository root directory to scan for build artifacts |
-| `--output` | Path | `<root>/compile_commands.json` | Output path for the generated file                    |
+| Parameter     | Type | Default                        | Description                                                                                                                                            |
+| ------------- | ---- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--repo-root` | Path | `.` (current directory)        | Repository root directory to scan for build artifacts. Forwarded by `AnalysisPipeline.py` when its own `--repo-root` flag is set.                     |
+| `--root`      | Path | (none)                         | Deprecated alias of `--repo-root`. Kept for backward compatibility — `--repo-root` wins when both are passed.                                          |
+| `--output`    | Path | `<repo-root>/compile_commands.json` | Output path for the generated file.                                                                                                              |
 
 ## How It Is Invoked
 
 **Standalone:**
 ```bash
 cd C:\Coding\Generals
-python Analysis\generate_compile_commands.py --root .
+python Analysis\generate_compile_commands.py --repo-root .
 ```
 
 **Via AnalysisPipeline.py:**
@@ -48,8 +49,7 @@ Called as the first step in the optional "setup" phase before analysis begins:
 ```
 python Analysis/AnalysisPipeline.py
 ```
-The pipeline runs `python generate_compile_commands.py` followed by `serena_extract.ps1` before
-the main analysis steps. This setup phase can be skipped with the `--skip-setup` flag.
+The pipeline runs `python generate_compile_commands.py --repo-root <repo>` followed by `serena_extract.ps1 -RepoRoot <repo>` before the main analysis steps. The setup phase can be skipped with the orchestrator's `--skip-lsp` flag.
 
 ## Input Files
 
@@ -118,13 +118,13 @@ This script does not read `.env` files. It uses no environment variables beyond 
 
 **Example 1: Generate compile_commands.json for a VC++ project**
 ```bash
-python generate_compile_commands.py --root C:\Coding\Generals
+python generate_compile_commands.py --repo-root C:\Coding\Generals
 ```
 Discovers `.vcxproj` / `.dsp` files, parses them, writes `C:\Coding\Generals\compile_commands.json`.
 
 **Example 2: Specify a custom output path**
 ```bash
-python generate_compile_commands.py --root C:\Coding\MyProject --output C:\Coding\MyProject\build\compile_commands.json
+python generate_compile_commands.py --repo-root C:\Coding\MyProject --output C:\Coding\MyProject\build\compile_commands.json
 ```
 
 **Example 3: CMake project (delegate mode)**
