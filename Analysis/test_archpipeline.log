@@ -1,0 +1,75 @@
+Test run started at 2026-04-25 22:21:21.047099
+======================================================================
+PASSED   test_archpipeline.py::TestParseSubsections::test_full_parse
+PASSED   test_archpipeline.py::TestParseSubsections::test_comments_excluded
+PASSED   test_archpipeline.py::TestParseSubsections::test_blanks_excluded
+PASSED   test_archpipeline.py::TestParseSubsections::test_config_excluded
+PASSED   test_archpipeline.py::TestParseSubsections::test_no_markers_returns_empty
+PASSED   test_archpipeline.py::TestParseSubsections::test_empty_file_returns_empty
+PASSED   test_archpipeline.py::TestParseSubsections::test_empty_block_returns_empty
+PASSED   test_archpipeline.py::TestSetupLogging::test_creates_log_file
+PASSED   test_archpipeline.py::TestSetupLogging::test_has_console_handler
+PASSED   test_archpipeline.py::TestSanitizeSubsectionName::test_standard
+PASSED   test_archpipeline.py::TestSanitizeSubsectionName::test_no_backslashes
+PASSED   test_archpipeline.py::TestSanitizeSubsectionName::test_whitespace
+FAILED   test_archpipeline.py::TestBuildCommand::test_ps_with_target_dir
+E   AssertionError: assert ['powershell'...cal.ps1', ...] == ['powershell'...cal.ps1', ...]
+      
+      At index 5 diff: 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_ps_with_target_dir0\\archgen_local.ps1' != 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_ps_with_target_dir0\\ArchAnalysis\\archgen_local.ps1'
+      Use -v to get more diff
+FAILED   test_archpipeline.py::TestBuildCommand::test_ps_without_target_dir
+E   AssertionError: assert ['powershell'...archxref.ps1'] == ['powershell'...archxref.ps1']
+      
+      At index 5 diff: 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_ps_without_target_dir0\\archxref.ps1' != 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_ps_without_target_dir0\\ArchAnalysis\\archxref.ps1'
+      Use -v to get more diff
+FAILED   test_archpipeline.py::TestBuildCommand::test_python
+E   AssertionError: assert ['C:\\Python3...iew_local.py'] == ['C:\\Python3...iew_local.py']
+      
+      At index 1 diff: 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_python0\\arch_overview_local.py' != 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_python0\\ArchAnalysis\\arch_overview_local.py'
+      Use -v to get more diff
+FAILED   test_archpipeline.py::TestBuildCommand::test_args_appended
+E   AssertionError: assert ['powershell'...cal.ps1', ...] == ['powershell'...cal.ps1', ...]
+      
+      At index 5 diff: 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_args_appended0\\archpass2_local.ps1' != 'C:\\Users\\folar\\AppData\\Local\\Temp\\pytest-of-folar\\pytest-1\\test_args_appended0\\ArchAnalysis\\archpass2_local.ps1'
+      Use -v to get more diff
+FAILED   test_archpipeline.py::TestRunCommand::test_success
+E   AssertionError: Expected 'run' to be called once. Called 0 times.
+FAILED   test_archpipeline.py::TestRunCommand::test_failure_raises
+E   Failed: DID NOT RAISE <class 'subprocess.CalledProcessError'>
+PASSED   test_archpipeline.py::TestRunCommand::test_dry_run_skips
+FAILED   test_archpipeline.py::TestRunCommand::test_cwd_correct
+E   AssertionError: Expected 'run' to be called once. Called 0 times.
+PASSED   test_archpipeline.py::TestRenameArchitectureFolder::test_success
+PASSED   test_archpipeline.py::TestRenameArchitectureFolder::test_no_src
+PASSED   test_archpipeline.py::TestRenameArchitectureFolder::test_dst_exists
+PASSED   test_archpipeline.py::TestRenameArchitectureFolder::test_dry_run
+PASSED   test_archpipeline.py::TestRenameArchitectureFolder::test_naming_format
+FAILED   test_archpipeline.py::TestRunOneTimeSteps::test_skip_lsp_skips
+E   TypeError: run_one_time_steps() missing 1 required positional argument: 'logger'
+FAILED   test_archpipeline.py::TestRunOneTimeSteps::test_skip_lsp_runs
+E   TypeError: run_one_time_steps() missing 1 required positional argument: 'logger'
+FAILED   test_archpipeline.py::TestRunPipeline::test_two_subsections
+E   TypeError: run_pipeline() missing 1 required positional argument: 'logger'
+FAILED   test_archpipeline.py::TestRunPipeline::test_start_from
+E   TypeError: run_pipeline() missing 1 required positional argument: 'logger'
+FAILED   test_archpipeline.py::TestRunPipeline::test_correct_commands
+E   TypeError: run_pipeline() missing 1 required positional argument: 'logger'
+PASSED   test_archpipeline.py::TestParseArgs::test_defaults
+PASSED   test_archpipeline.py::TestParseArgs::test_dry_run
+PASSED   test_archpipeline.py::TestParseArgs::test_start_from
+PASSED   test_archpipeline.py::TestParseArgs::test_skip_lsp
+PASSED   test_archpipeline.py::TestParseArgs::test_invalid_start_from
+FAILED   test_archpipeline.py::TestGetRepoRoot::test_normal
+E   AssertionError: assert False
+     +  where False = exists()
+     +    where exists = (WindowsPath('C:/Coding/LocalLLM_Analysis/LocalLLMAnalysis') / '.env').exists
+FAILED   test_archpipeline.py::TestGetRepoRoot::test_missing_env
+E   Failed: DID NOT RAISE <class 'FileNotFoundError'>
+FAILED   test_archpipeline.py::TestMain::test_happy_path
+E   AssertionError: expected call not found.
+    Expected: run_one_time_steps(WindowsPath('/repo/root'), <MagicMock name='setup_logging()' id='2054548927696'>, False, False)
+      Actual: run_one_time_steps(WindowsPath('C:/Coding/LocalLLM_Analysis/LocalLLMAnalysis'), WindowsPath('/repo/root'), <MagicMock name='setup_logging()' id='2054548927696'>, False, False)
+PASSED   test_archpipeline.py::TestMain::test_called_process_error
+PASSED   test_archpipeline.py::TestMain::test_empty_subsections
+======================================================================
+Test run finished at 2026-04-25 22:21:21.557434

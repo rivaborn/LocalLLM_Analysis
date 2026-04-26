@@ -1,0 +1,126 @@
+2026-04-25 22:21:58,161 [INFO] Pipeline started at 2026-04-25 22:21:58.161877
+2026-04-25 22:21:58,162 [INFO] Repo root: C:\Users\folar\AppData\Local\Temp
+2026-04-25 22:21:58,162 [INFO] Env file:  C:\Coding\LocalLLM_Analysis\Common\.env
+2026-04-25 22:21:58,162 [INFO] === One-time setup steps ===
+2026-04-25 22:21:58,163 [INFO] Running: C:\Python314\python.exe C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\generate_compile_commands.py
+2026-04-25 22:21:58,163 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,163 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\serena_extract.ps1
+2026-04-25 22:21:58,163 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,660 [INFO] Subsection 1/3: REDALERT
+2026-04-25 22:21:58,661 [INFO]   Step 1/6: Per-file docs
+2026-04-25 22:21:58,661 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\archgen_local.ps1 -TargetDir REDALERT -Preset generals
+2026-04-25 22:21:58,661 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,661 [INFO]   Step 2/6: Cross-reference index
+2026-04-25 22:21:58,661 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\archxref.ps1
+2026-04-25 22:21:58,661 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,661 [INFO]   Step 3/6: Mermaid diagrams
+2026-04-25 22:21:58,661 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\archgraph.ps1
+2026-04-25 22:21:58,661 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,661 [INFO]   Step 4/6: Architecture overview
+2026-04-25 22:21:58,661 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\arch_overview_local.ps1
+2026-04-25 22:21:58,661 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,661 [INFO]   Step 5/6: Pass 2 context
+2026-04-25 22:21:58,661 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\archpass2_context.ps1
+2026-04-25 22:21:58,661 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,661 [INFO]   Step 6/6: Pass 2 analysis
+2026-04-25 22:21:58,661 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\archpass2_local.ps1
+2026-04-25 22:21:58,661 [INFO] [DRY RUN] Skipped
+2026-04-25 22:21:58,661 [INFO] Renaming C:\Users\folar\AppData\Local\Temp\architecture -> C:\Users\folar\AppData\Local\Temp\1. REDALERT
+2026-04-25 22:26:20,738 [INFO] Pipeline started at 2026-04-25 22:26:20.738125
+2026-04-25 22:26:20,738 [INFO] Repo root: C:\Users\folar\AppData\Local\Temp
+2026-04-25 22:26:20,738 [INFO] Env file:  C:\Coding\LocalLLM_Analysis\Common\.env
+2026-04-25 22:26:20,738 [INFO] === One-time setup steps ===
+2026-04-25 22:26:20,738 [INFO] Running: C:\Python314\python.exe C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\generate_compile_commands.py
+2026-04-25 22:26:20,738 [INFO] [DRY RUN] Skipped
+2026-04-25 22:26:20,739 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\LocalLLMAnalysis\serena_extract.ps1
+2026-04-25 22:26:20,739 [INFO] [DRY RUN] Skipped
+2026-04-25 22:37:07,597 [INFO] Pipeline started at 2026-04-25 22:37:07.597107
+2026-04-25 22:37:07,597 [INFO] Repo root: C:\Users\folar\AppData\Local\Temp
+2026-04-25 22:37:07,597 [INFO] Env file:  C:\Coding\LocalLLM_Analysis\Common\.env
+2026-04-25 22:37:07,598 [INFO] === One-time setup steps ===
+2026-04-25 22:37:07,598 [INFO] Running: C:\Python314\python.exe C:\Coding\LocalLLM_Analysis\Analysis\generate_compile_commands.py
+2026-04-25 22:37:07,598 [INFO] [DRY RUN] Skipped
+2026-04-25 22:37:07,598 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\serena_extract.ps1
+2026-04-25 22:37:07,598 [INFO] [DRY RUN] Skipped
+2026-04-25 22:41:58,253 [INFO] Pipeline started at 2026-04-25 22:41:58.253105
+2026-04-25 22:41:58,253 [INFO] Repo root: C:\Users\folar\AppData\Local\Temp
+2026-04-25 22:41:58,253 [INFO] Env file:  C:\Coding\LocalLLM_Analysis\Common\.env
+2026-04-25 22:41:58,253 [INFO] === One-time setup steps ===
+2026-04-25 22:41:58,253 [INFO] Running: C:\Python314\python.exe C:\Coding\LocalLLM_Analysis\Analysis\generate_compile_commands.py
+2026-04-25 22:41:58,253 [INFO] [DRY RUN] Skipped
+2026-04-25 22:41:58,253 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\serena_extract.ps1
+2026-04-25 22:41:58,254 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:41,863 [INFO] Pipeline started at 2026-04-25 22:48:41.863401
+2026-04-25 22:48:41,863 [INFO] Repo root: C:\Some\CnC\Repo
+2026-04-25 22:48:41,863 [INFO] Env file:  C:\Coding\LocalLLM_Analysis\Common\.env
+2026-04-25 22:48:41,864 [INFO] === One-time setup steps ===
+2026-04-25 22:48:41,864 [INFO] Running: C:\Python314\python.exe C:\Coding\LocalLLM_Analysis\Analysis\generate_compile_commands.py --repo-root C:\Some\CnC\Repo
+2026-04-25 22:48:41,864 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:41,864 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\serena_extract.ps1 -RepoRoot C:\Some\CnC\Repo
+2026-04-25 22:48:41,864 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:41,865 [ERROR] Unexpected error: [WinError 3] The system cannot find the path specified: 'C:\\Some\\CnC\\Repo'
+2026-04-25 22:48:54,815 [INFO] Pipeline started at 2026-04-25 22:48:54.815401
+2026-04-25 22:48:54,815 [INFO] Repo root: C:\Coding
+2026-04-25 22:48:54,815 [INFO] Env file:  C:\Coding\LocalLLM_Analysis\Common\.env
+2026-04-25 22:48:54,816 [INFO] Skipping LSP steps
+2026-04-25 22:48:54,816 [INFO] Subsection 1/3: REDALERT
+2026-04-25 22:48:54,816 [INFO]   Step 1/6: Per-file docs
+2026-04-25 22:48:54,816 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archgen_local.ps1 -RepoRoot C:\Coding -TargetDir REDALERT -Preset generals
+2026-04-25 22:48:54,816 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,816 [INFO]   Step 2/6: Cross-reference index
+2026-04-25 22:48:54,816 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archxref.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,816 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,817 [INFO]   Step 3/6: Mermaid diagrams
+2026-04-25 22:48:54,817 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archgraph.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,817 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,817 [INFO]   Step 4/6: Architecture overview
+2026-04-25 22:48:54,817 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\arch_overview_local.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,817 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,817 [INFO]   Step 5/6: Pass 2 context
+2026-04-25 22:48:54,817 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archpass2_context.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,817 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,817 [INFO]   Step 6/6: Pass 2 analysis
+2026-04-25 22:48:54,817 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archpass2_local.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,817 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,817 [INFO] Renaming C:\Coding\architecture -> C:\Coding\1. REDALERT
+2026-04-25 22:48:54,817 [INFO] Subsection 2/3: TIBERIANDAWN
+2026-04-25 22:48:54,817 [INFO]   Step 1/6: Per-file docs
+2026-04-25 22:48:54,817 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archgen_local.ps1 -RepoRoot C:\Coding -TargetDir TIBERIANDAWN -Preset generals
+2026-04-25 22:48:54,818 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,818 [INFO]   Step 2/6: Cross-reference index
+2026-04-25 22:48:54,818 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archxref.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,818 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,818 [INFO]   Step 3/6: Mermaid diagrams
+2026-04-25 22:48:54,818 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archgraph.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,818 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,818 [INFO]   Step 4/6: Architecture overview
+2026-04-25 22:48:54,818 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\arch_overview_local.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,818 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,818 [INFO]   Step 5/6: Pass 2 context
+2026-04-25 22:48:54,818 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archpass2_context.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,818 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,818 [INFO]   Step 6/6: Pass 2 analysis
+2026-04-25 22:48:54,818 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archpass2_local.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,818 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,818 [INFO] Renaming C:\Coding\architecture -> C:\Coding\2. TIBERIANDAWN
+2026-04-25 22:48:54,819 [INFO] Subsection 3/3: CnCTDRAMapEditor
+2026-04-25 22:48:54,819 [INFO]   Step 1/6: Per-file docs
+2026-04-25 22:48:54,819 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archgen_local.ps1 -RepoRoot C:\Coding -TargetDir CnCTDRAMapEditor -Preset generals
+2026-04-25 22:48:54,819 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,819 [INFO]   Step 2/6: Cross-reference index
+2026-04-25 22:48:54,819 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archxref.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,819 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,819 [INFO]   Step 3/6: Mermaid diagrams
+2026-04-25 22:48:54,819 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archgraph.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,819 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,819 [INFO]   Step 4/6: Architecture overview
+2026-04-25 22:48:54,819 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\arch_overview_local.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,819 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,819 [INFO]   Step 5/6: Pass 2 context
+2026-04-25 22:48:54,819 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archpass2_context.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,819 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,819 [INFO]   Step 6/6: Pass 2 analysis
+2026-04-25 22:48:54,819 [INFO] Running: powershell -NoProfile -ExecutionPolicy Bypass -File C:\Coding\LocalLLM_Analysis\Analysis\archpass2_local.ps1 -RepoRoot C:\Coding
+2026-04-25 22:48:54,819 [INFO] [DRY RUN] Skipped
+2026-04-25 22:48:54,819 [INFO] Renaming C:\Coding\architecture -> C:\Coding\3. CnCTDRAMapEditor
+2026-04-25 22:48:54,819 [INFO] Pipeline complete.

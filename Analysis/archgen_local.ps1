@@ -22,21 +22,28 @@ param(
     [switch]$Clean,
     [switch]$NoHeaders,
     [string]$EnvFile      = "",
+    [string]$RepoRoot     = "",
     [switch]$Test
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-if ($EnvFile -eq "") { $EnvFile = Join-Path $PSScriptRoot '.env' }
+if ($EnvFile -eq "") { $EnvFile = Join-Path $PSScriptRoot '..\Common\.env' }
 
 # ── Load shared module ───────────────────────────────────────
 
-. (Join-Path $PSScriptRoot 'llm_common.ps1')
+. (Join-Path $PSScriptRoot '..\Common\llm_common.ps1')
 
 # ── Load config ──────────────────────────────────────────────
 
 $script:cfg = Read-EnvFile $EnvFile
+
+# Promote Analysis-specific context window into LLM_NUM_CTX so Invoke-LocalLLM's
+# auto-read picks it up without any callsite changes.
+if ($script:cfg.ContainsKey('LLM_ANALYSIS_NUM_CTX') -and $script:cfg['LLM_ANALYSIS_NUM_CTX'] -ne '') {
+    $script:cfg['LLM_NUM_CTX'] = $script:cfg['LLM_ANALYSIS_NUM_CTX']
+}
 
 $presetName   = if ($Preset -ne '') { $Preset } else { Cfg 'PRESET' '' }
 $presetData   = Get-Preset $presetName
@@ -51,18 +58,22 @@ $minTrivialLines = [int](Cfg 'MIN_TRIVIAL_LINES' '20')
 
 # LLM settings
 $llmEndpoint    = Get-LLMEndpoint
-$llmModel       = Cfg 'LLM_MODEL'       'qwen2.5-coder:14b'
+$llmModel       = Get-LLMModel -RoleKey 'LLM_MODEL'
 $llmTemperature = [double](Cfg 'LLM_TEMPERATURE' '0.1')
 $llmMaxTokens   = [int](Cfg 'LLM_MAX_TOKENS'    '800')
 $llmTimeout     = [int](Cfg 'LLM_TIMEOUT'        '120')
 
 # ── Paths ────────────────────────────────────────────────────
 
-$repoRoot = (Get-Location).Path
-try {
-    $g = & git rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -eq 0 -and $g) { $repoRoot = $g.Trim() }
-} catch {}
+if ($RepoRoot -ne "") {
+    $repoRoot = (Resolve-Path $RepoRoot).Path
+} else {
+    $repoRoot = (Get-Location).Path
+    try {
+        $g = & git rev-parse --show-toplevel 2>$null
+        if ($LASTEXITCODE -eq 0 -and $g) { $repoRoot = $g.Trim() }
+    } catch {}
+}
 
 $archDir  = Join-Path $repoRoot 'architecture'
 $stateDir = Join-Path $archDir  '.archgen_state'
@@ -183,6 +194,8 @@ Write-Host "Prompt:          $promptFile"
 $lspStatus = if ($hasSerenaContext) { "YES (compressed symbols)" } else { "NO" }
 Write-Host "Serena context:  $lspStatus"
 Write-Host ''
+Write-Host 'Press Ctrl+Q to cancel (checked between files).' -ForegroundColor DarkGray
+Write-Host ''
 
 if ($toDo -eq 0) {
     Write-Host 'Nothing to do. All docs are up to date.' -ForegroundColor Green
@@ -196,6 +209,7 @@ $done      = 0
 $failed    = 0
 
 foreach ($rel in $queue) {
+    Test-CancelKey
     $src     = Join-Path $repoRoot ($rel -replace '/', '\')
     $outPath = Join-Path $archDir  (($rel -replace '/', '\') + '.md')
     $outDir  = Split-Path $outPath -Parent

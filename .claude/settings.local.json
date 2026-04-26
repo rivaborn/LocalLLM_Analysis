@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.ps1$|\\\\.py$|\\\\.txt$|\\\\.md$\")",
+      "Bash(grep -E \"\\\\.md$\")"
+    ]
+  }
+}

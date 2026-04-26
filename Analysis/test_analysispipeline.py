@@ -8,8 +8,8 @@ import sys  # Added import
 import argparse  # Added import
 import logging  # Added import
 
-# Import all functions from ArchPipeline
-from ArchPipeline import (
+# Import all functions from AnalysisPipeline
+from AnalysisPipeline import (
     get_repo_root, parse_subsections, sanitize_subsection_name,
     setup_logging, build_command, run_command, rename_architecture_folder,
     run_one_time_steps, run_pipeline, parse_args, main,
@@ -144,7 +144,7 @@ class TestBuildCommand:
         ]
 
 class TestRunCommand:
-    @patch("ArchPipeline.subprocess.run")
+    @patch("AnalysisPipeline.subprocess.run")
     def test_success(self, mock_run, tmp_path):
         mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="hello\n", stderr="")
         logger = MagicMock()
@@ -158,7 +158,7 @@ class TestRunCommand:
         logger.info.assert_any_call("Running: echo hello")
         logger.debug.assert_any_call("hello")
 
-    @patch("ArchPipeline.subprocess.run")
+    @patch("AnalysisPipeline.subprocess.run")
     def test_failure_raises(self, mock_run, tmp_path):
         mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="Error occurred")
         logger = MagicMock()
@@ -173,7 +173,7 @@ class TestRunCommand:
         logger.info.assert_any_call("Running: echo hello")
         logger.error.assert_any_call("Command failed (exit 1): echo hello\nstderr: Error occurred")
 
-    @patch("ArchPipeline.subprocess.run")
+    @patch("AnalysisPipeline.subprocess.run")
     def test_dry_run_skips(self, mock_run, tmp_path):
         logger = MagicMock()
         run_command(["echo", "hello"], tmp_path, logger, dry_run=True)
@@ -181,7 +181,7 @@ class TestRunCommand:
         logger.info.assert_any_call("Running: echo hello")
         logger.info.assert_any_call("[DRY RUN] Skipped")
 
-    @patch("ArchPipeline.subprocess.run")
+    @patch("AnalysisPipeline.subprocess.run")
     def test_cwd_correct(self, mock_run, tmp_path):
         mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
         logger = MagicMock()
@@ -234,7 +234,7 @@ class TestRenameArchitectureFolder:
         assert dst.exists()
 
 class TestRunOneTimeSteps:
-    @patch("ArchPipeline.run_command")
+    @patch("AnalysisPipeline.run_command")
     def test_skip_lsp_skips(self, mock_run):
         repo_root = Path("/repo/root")
         logger = MagicMock()
@@ -242,7 +242,7 @@ class TestRunOneTimeSteps:
         mock_run.assert_not_called()
         logger.info.assert_any_call("Skipping LSP steps")
 
-    @patch("ArchPipeline.run_command")
+    @patch("AnalysisPipeline.run_command")
     def test_skip_lsp_runs(self, mock_run):
         repo_root = Path("/repo/root")
         logger = MagicMock()
@@ -251,9 +251,9 @@ class TestRunOneTimeSteps:
         logger.info.assert_any_call("=== One-time setup steps ===")
 
 class TestRunPipeline:
-    @patch("ArchPipeline.rename_architecture_folder")
-    @patch("ArchPipeline.build_command")
-    @patch("ArchPipeline.run_command")
+    @patch("AnalysisPipeline.rename_architecture_folder")
+    @patch("AnalysisPipeline.build_command")
+    @patch("AnalysisPipeline.run_command")
     def test_two_subsections(self, mock_run, mock_build, mock_rename, tmp_path):
         subsections = ["Subsection1", "Subsection2"]
         logger = MagicMock()
@@ -262,9 +262,9 @@ class TestRunPipeline:
         assert mock_build.call_count == 12
         assert mock_rename.call_count == 2
 
-    @patch("ArchPipeline.rename_architecture_folder")
-    @patch("ArchPipeline.build_command")
-    @patch("ArchPipeline.run_command")
+    @patch("AnalysisPipeline.rename_architecture_folder")
+    @patch("AnalysisPipeline.build_command")
+    @patch("AnalysisPipeline.run_command")
     def test_start_from(self, mock_run, mock_build, mock_rename, tmp_path):
         subsections = ["Subsection1", "Subsection2"]
         logger = MagicMock()
@@ -273,9 +273,9 @@ class TestRunPipeline:
         assert mock_build.call_count == 6
         assert mock_rename.call_count == 1
 
-    @patch("ArchPipeline.rename_architecture_folder")
-    @patch("ArchPipeline.build_command")
-    @patch("ArchPipeline.run_command")
+    @patch("AnalysisPipeline.rename_architecture_folder")
+    @patch("AnalysisPipeline.build_command")
+    @patch("AnalysisPipeline.run_command")
     def test_correct_commands(self, mock_run, mock_build, mock_rename, tmp_path):
         subsections = ["Subsection1"]
         logger = MagicMock()
@@ -313,7 +313,7 @@ class TestGetRepoRoot:
         arch_dir.mkdir()
         (tmp_path / ".env").touch()
         # Patch __file__ to point inside ArchAnalysis
-        with patch("ArchPipeline.Path") as mock_path_cls:
+        with patch("AnalysisPipeline.Path") as mock_path_cls:
             mock_file_path = MagicMock()
             mock_file_path.resolve.return_value.parent.parent = tmp_path
             mock_path_cls.return_value = mock_file_path
@@ -324,17 +324,17 @@ class TestGetRepoRoot:
         assert (root / ".env").exists()
 
     def test_missing_env(self, tmp_path):
-        with patch("ArchPipeline.__file__", str(tmp_path / "ArchAnalysis" / "ArchPipeline.py")):
+        with patch("AnalysisPipeline.__file__", str(tmp_path / "ArchAnalysis" / "AnalysisPipeline.py")):
             with pytest.raises(FileNotFoundError):
                 get_repo_root()
 
 class TestMain:
-    @patch("ArchPipeline.parse_args")
-    @patch("ArchPipeline.get_repo_root")
-    @patch("ArchPipeline.setup_logging")
-    @patch("ArchPipeline.parse_subsections")
-    @patch("ArchPipeline.run_one_time_steps")
-    @patch("ArchPipeline.run_pipeline")
+    @patch("AnalysisPipeline.parse_args")
+    @patch("AnalysisPipeline.get_repo_root")
+    @patch("AnalysisPipeline.setup_logging")
+    @patch("AnalysisPipeline.parse_subsections")
+    @patch("AnalysisPipeline.run_one_time_steps")
+    @patch("AnalysisPipeline.run_pipeline")
     def test_happy_path(self, mock_run_pipeline, mock_run_one_time_steps, mock_parse_subsections, mock_setup_logging, mock_get_repo_root, mock_parse_args):
         mock_parse_args.return_value = argparse.Namespace(dry_run=False, start_from=1, skip_lsp=False)
         mock_get_repo_root.return_value = Path("/repo/root")
@@ -344,12 +344,12 @@ class TestMain:
         mock_run_one_time_steps.assert_called_once_with(Path("/repo/root"), mock_setup_logging.return_value, False, False)
         mock_run_pipeline.assert_called_once_with(Path("/repo/root"), ["Subsection1"], mock_setup_logging.return_value, False, 1)
 
-    @patch("ArchPipeline.parse_args")
-    @patch("ArchPipeline.get_repo_root")
-    @patch("ArchPipeline.setup_logging")
-    @patch("ArchPipeline.parse_subsections")
-    @patch("ArchPipeline.run_one_time_steps")
-    @patch("ArchPipeline.run_pipeline")
+    @patch("AnalysisPipeline.parse_args")
+    @patch("AnalysisPipeline.get_repo_root")
+    @patch("AnalysisPipeline.setup_logging")
+    @patch("AnalysisPipeline.parse_subsections")
+    @patch("AnalysisPipeline.run_one_time_steps")
+    @patch("AnalysisPipeline.run_pipeline")
     def test_called_process_error(self, mock_run_pipeline, mock_run_one_time_steps, mock_parse_subsections, mock_setup_logging, mock_get_repo_root, mock_parse_args):
         mock_parse_args.return_value = argparse.Namespace(dry_run=False, start_from=1, skip_lsp=False)
         mock_get_repo_root.return_value = Path("/repo/root")
@@ -360,10 +360,10 @@ class TestMain:
             main()
         assert excinfo.value.code == 1
 
-    @patch("ArchPipeline.parse_args")
-    @patch("ArchPipeline.get_repo_root")
-    @patch("ArchPipeline.setup_logging")
-    @patch("ArchPipeline.parse_subsections")
+    @patch("AnalysisPipeline.parse_args")
+    @patch("AnalysisPipeline.get_repo_root")
+    @patch("AnalysisPipeline.setup_logging")
+    @patch("AnalysisPipeline.parse_subsections")
     def test_empty_subsections(self, mock_parse_subsections, mock_setup_logging, mock_get_repo_root, mock_parse_args):
         mock_parse_args.return_value = argparse.Namespace(dry_run=False, start_from=1, skip_lsp=False)
         mock_get_repo_root.return_value = Path("/repo/root")

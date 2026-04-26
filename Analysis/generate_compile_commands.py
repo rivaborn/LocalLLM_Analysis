@@ -532,11 +532,13 @@ def generate_compile_commands(root: Path, output: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate compile_commands.json for clangd")
-    parser.add_argument("--root", type=Path, default=Path("."), help="Repository root")
+    parser.add_argument("--root", type=Path, default=None, help="Repository root (deprecated alias of --repo-root)")
+    parser.add_argument("--repo-root", type=Path, default=None, help="Repository root (defaults to CWD)")
     parser.add_argument("--output", type=Path, default=None, help="Output path")
     args = parser.parse_args()
 
-    root = args.root.resolve()
+    root_arg = args.repo_root or args.root or Path(".")
+    root = root_arg.resolve()
     output = args.output or (root / "compile_commands.json")
 
     if output.exists():
