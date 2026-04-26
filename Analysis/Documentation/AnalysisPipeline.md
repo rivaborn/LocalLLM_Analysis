@@ -24,12 +24,13 @@ The orchestrator script's location is unrelated to where you run it — it alway
 
 ## CLI Options
 
-| Flag             | Type    | Default | Effect                                                                                                                                                                    |
-| ---------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dry-run`      | flag    | off     | Log every command that would run, but skip execution. Includes step renames. Use this to preview the full plan before committing GPU time.                                |
-| `--start-from N` | int ≥ 1 | `1`     | Skip subsections `1..N-1`. Subsection numbering is 1-indexed and matches the order in `.env`. Errors out if `N` exceeds the subsection count.                             |
-| `--skip-lsp`     | flag    | off     | Skip the one-time setup steps (`generate_compile_commands.py` + `serena_extract.ps1`). Use after the LSP index is already built, or when running on a non-C++ subsection. |
-| `-h` / `--help`  | flag    | —       | Print argparse help and exit.                                                                                                                                             |
+| Flag                 | Type    | Default | Effect                                                                                                                                                                                          |
+| -------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dry-run`          | flag    | off     | Log every command that would run, but skip execution. Includes step renames. Use this to preview the full plan before committing GPU time.                                                      |
+| `--start-from N`     | int ≥ 1 | `1`     | Skip subsections `1..N-1`. Subsection numbering is 1-indexed and matches the order in `.env`. Errors out if `N` exceeds the subsection count.                                                   |
+| `--skip-lsp`         | flag    | off     | Skip the one-time setup steps (`generate_compile_commands.py` + `serena_extract.ps1`). Use after the LSP index is already built, or when running on a non-C++ subsection.                       |
+| `--repo-root <path>` | string  | CWD     | Target repo root. Defaults to the current working directory. Forwarded to every PS1 worker as `-RepoRoot <path>` and to every Python worker as `--repo-root <path>`. Also used as subprocess `cwd=`. |
+| `-h` / `--help`      | flag    | —       | Print argparse help and exit.                                                                                                                                                                   |
 
 There is no flag for choosing a subsection by name, model, preset, or env file — all of that is driven by `Common/.env`.
 

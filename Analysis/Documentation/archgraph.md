@@ -21,24 +21,24 @@ count) and a maximum edge cap to keep diagrams readable.
 | `../Common/.env`           | Configuration file (read for environment, but no LLM keys needed) |
 | Per-file docs              | Output of `archgen_local.ps1` in `<repo>/architecture/`           |
 
-**Note:** This script does NOT require `llm_common.ps1` or Ollama. It has its own `Read-EnvFile`
-implementation.
+**Note:** This script makes no LLM calls but dot-sources `../Common/llm_common.ps1` like every other worker (for `Read-EnvFile` / `Cfg`).
 
 ## Usage
 
 ```powershell
-.\archgraph.ps1 [-TargetDir <subsystem>] [-MaxCallEdges <n>] [-MinCallSignificance <n>] [-EnvFile <path>] [-Test]
+.\archgraph.ps1 [-TargetDir <subsystem>] [-MaxCallEdges <n>] [-MinCallSignificance <n>] [-EnvFile <path>] [-RepoRoot <path>] [-Test]
 ```
 
 ### CLI Options
 
-| Parameter              | Type   | Default          | Description                                                                                                                              |
-| ---------------------- | ------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `-TargetDir`           | string | `"."`            | Subdirectory within `architecture/` to scan. `"."` scans the entire tree.                                                                |
-| `-MaxCallEdges`        | int    | `150`            | Maximum number of call edges to render in the function call graph.                                                                       |
-| `-MinCallSignificance` | int    | `2`              | Minimum number of incoming calls for a callee to be considered "significant" and included in the graph. All callers are always included. |
-| `-EnvFile`             | string | `../Common/.env` | Path to `.env` configuration file.                                                                                                       |
-| `-Test`                | switch | off              | Run the built-in unit test suite (no external dependencies needed).                                                                      |
+| Parameter              | Type   | Default          | Description                                                                                                                                                                          |
+| ---------------------- | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir`           | string | `"."`            | Subdirectory within `architecture/` to scan. `"."` scans the entire tree.                                                                                                            |
+| `-MaxCallEdges`        | int    | `150`            | Maximum number of call edges to render in the function call graph.                                                                                                                   |
+| `-MinCallSignificance` | int    | `2`              | Minimum number of incoming calls for a callee to be considered "significant" and included in the graph. All callers are always included.                                             |
+| `-EnvFile`             | string | `../Common/.env` | Path to `.env` configuration file.                                                                                                                                                   |
+| `-RepoRoot`            | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
+| `-Test`                | switch | off              | Run the built-in unit test suite (no external dependencies needed).                                                                                                                  |
 
 ## How It Is Invoked
 

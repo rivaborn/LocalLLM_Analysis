@@ -21,21 +21,22 @@ processing and runs quickly even on 1000+ file codebases.
 | `../Common/.env`           | Configuration file                                      |
 | Per-file docs              | Output of `archgen_local.ps1` in `<repo>/architecture/` |
 
-**Note:** This script does NOT require `llm_common.ps1` or Ollama. It has its own `Read-EnvFile`.
+**Note:** This script makes no LLM calls and reaches out to Ollama only via the shared module's `Read-EnvFile` / `Cfg` helpers. It dot-sources `../Common/llm_common.ps1` like every other worker.
 
 ## Usage
 
 ```powershell
-.\archxref.ps1 [-TargetDir <subsystem>] [-EnvFile <path>] [-Test]
+.\archxref.ps1 [-TargetDir <subsystem>] [-EnvFile <path>] [-RepoRoot <path>] [-Test]
 ```
 
 ### CLI Options
 
-| Parameter    | Type   | Default          | Description                                                                              |
-| ------------ | ------ | ---------------- | ---------------------------------------------------------------------------------------- |
-| `-TargetDir` | string | `"."`            | Subdirectory within `architecture/` to scan. `"."` or `"all"` scans the entire doc tree. |
-| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` file.                                                                 |
-| `-Test`      | switch | off              | Run the built-in unit test suite.                                                        |
+| Parameter    | Type   | Default          | Description                                                                                                                                                                          |
+| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir` | string | `"."`            | Subdirectory within `architecture/` to scan. `"."` or `"all"` scans the entire doc tree.                                                                                             |
+| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` file.                                                                                                                                                             |
+| `-RepoRoot`  | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
+| `-Test`      | switch | off              | Run the built-in unit test suite.                                                                                                                                                    |
 
 ## How It Is Invoked
 

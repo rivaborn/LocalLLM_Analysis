@@ -28,18 +28,19 @@ concatenating the subsystem overviews.
 ## Usage
 
 ```powershell
-.\arch_overview_local.ps1 [-TargetDir <dir>] [-Single] [-Clean] [-Full] [-EnvFile <path>]
+.\arch_overview_local.ps1 [-TargetDir <dir>] [-Single] [-Clean] [-Full] [-EnvFile <path>] [-RepoRoot <path>]
 ```
 
 ### CLI Options
 
-| Parameter    | Type   | Default          | Description                                                                                                                                                |
-| ------------ | ------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-TargetDir` | string | `"all"`          | Subsystem directory to summarize. `"all"` or `"."` processes the entire `architecture/` tree. A specific path (e.g. `Engine/Source/Runtime`) limits scope. |
-| `-Single`    | switch | off              | Force single-pass mode even if summary data exceeds the chunk threshold.                                                                                   |
-| `-Clean`     | switch | off              | Remove all `*architecture.md` and `*diagram_data.md` files before generating.                                                                              |
-| `-Full`      | switch | off              | Reserved flag (present in param block).                                                                                                                    |
-| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` configuration file.                                                                                                                     |
+| Parameter    | Type   | Default          | Description                                                                                                                                                                          |
+| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir` | string | `"all"`          | Subsystem directory to summarize. `"all"` or `"."` processes the entire `architecture/` tree. A specific path (e.g. `Engine/Source/Runtime`) limits scope.                           |
+| `-Single`    | switch | off              | Force single-pass mode even if summary data exceeds the chunk threshold.                                                                                                             |
+| `-Clean`     | switch | off              | Remove all `*architecture.md` and `*diagram_data.md` files before generating.                                                                                                        |
+| `-Full`      | switch | off              | Reserved flag (present in param block).                                                                                                                                              |
+| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` configuration file.                                                                                                                                               |
+| `-RepoRoot`  | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
 
 ## How It Is Invoked
 
@@ -77,11 +78,14 @@ python Analysis/AnalysisPipeline.py
 | ---------------------- | ------------------------------- | --------------------------------------------------- |
 | `CODEBASE_DESC`        | `"game engine / game codebase"` | Codebase description for LLM context                |
 | `CHUNK_THRESHOLD`      | `400`                           | Summary line count above which chunked mode is used |
-| `LLM_MODEL`            | `qwen2.5-coder:14b`             | Ollama model                                        |
-| `LLM_TEMPERATURE`      | `0.1`                           | Sampling temperature                                |
-| `LLM_TIMEOUT`          | `120`                           | HTTP timeout in seconds                             |
-| `LLM_ANALYSIS_NUM_CTX` | (none)                          | Overrides `LLM_NUM_CTX` if set                      |
-| `LLM_ENDPOINT`         | (from helper)                   | Ollama API URL                                      |
+| `LLM_MODEL`            | (unset → falls back)            | Resolved via `Get-LLMModel`: role-key → `LLM_DEFAULT_MODEL` → `qwen3-coder:30b` |
+| `LLM_DEFAULT_MODEL`    | `qwen3-coder:30b`               | Universal fallback when `LLM_MODEL` is blank                                    |
+| `LLM_TEMPERATURE`      | `0.1`                           | Sampling temperature                                                            |
+| `LLM_TIMEOUT`          | `120`                           | HTTP timeout in seconds                                                         |
+| `LLM_NUM_CTX`          | `0`                             | When `> 0`, switches to Ollama-native `/api/chat` with `options.num_ctx`        |
+| `LLM_ANALYSIS_NUM_CTX` | (none)                          | Promoted into `LLM_NUM_CTX` by the script before any LLM call                   |
+| `LLM_ENDPOINT`         | (from helper)                   | Ollama API URL (composed from `LLM_HOST`+`LLM_PORT` when absent)                |
+| `LLM_THINK`            | `false`                         | Reasoning-mode toggle (only effective when `LLM_NUM_CTX > 0`)                   |
 
 ## Exit Codes
 

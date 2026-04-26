@@ -27,19 +27,20 @@ LLM call, saving time and GPU resources.
 ## Usage
 
 ```powershell
-.\archgen_local.ps1 [-TargetDir <path>] [-Preset <name>] [-Clean] [-NoHeaders] [-EnvFile <path>] [-Test]
+.\archgen_local.ps1 [-TargetDir <path>] [-Preset <name>] [-Clean] [-NoHeaders] [-EnvFile <path>] [-RepoRoot <path>] [-Test]
 ```
 
 ### CLI Options
 
-| Parameter    | Type   | Default          | Description                                                                                                                                                   |
-| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-TargetDir` | string | `"."`            | Subdirectory (relative to repo root) to scan. `"."` scans the entire repo.                                                                                    |
-| `-Preset`    | string | `""`             | Named preset (e.g. `generals`, `unreal`, `quake`). Overrides `PRESET` in `.env`. Controls include/exclude patterns, codebase description, and fence language. |
-| `-Clean`     | switch | off              | Removes all generated docs and state (preserves `.serena_context`, `.dir_context`, `.dir_headers`), then regenerates.                                         |
-| `-NoHeaders` | switch | off              | Reserved flag (present in param block but not used in main logic).                                                                                            |
-| `-EnvFile`   | string | `../Common/.env` | Path to an alternative `.env` configuration file.                                                                                                             |
-| `-Test`      | switch | off              | Reserved flag for test harness integration.                                                                                                                   |
+| Parameter    | Type   | Default          | Description                                                                                                                                                                          |
+| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir` | string | `"."`            | Subdirectory (relative to repo root) to scan. `"."` scans the entire repo.                                                                                                           |
+| `-Preset`    | string | `""`             | Named preset (e.g. `generals`, `unreal`, `quake`). Overrides `PRESET` in `.env`. Controls include/exclude patterns, codebase description, and fence language.                        |
+| `-Clean`     | switch | off              | Removes all generated docs and state (preserves `.serena_context`, `.dir_context`, `.dir_headers`), then regenerates.                                                                |
+| `-NoHeaders` | switch | off              | Reserved flag (present in param block but not used in main logic).                                                                                                                   |
+| `-EnvFile`   | string | `../Common/.env` | Path to an alternative `.env` configuration file.                                                                                                                                    |
+| `-RepoRoot`  | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
+| `-Test`      | switch | off              | Reserved flag for test harness integration.                                                                                                                                          |
 
 ## How It Is Invoked
 
@@ -87,12 +88,16 @@ which runs `archgen_local.ps1 -Preset generals` via PowerShell subprocess.
 | `MAX_FILE_LINES`       | `800`                    | Truncate source files beyond this line count before sending to LLM |
 | `SKIP_TRIVIAL`         | `1`                      | Whether to skip trivial files (`1` = yes)                          |
 | `MIN_TRIVIAL_LINES`    | `20`                     | Files below this line count are considered trivial                 |
-| `LLM_MODEL`            | `qwen2.5-coder:14b`      | Ollama model name                                                  |
-| `LLM_TEMPERATURE`      | `0.1`                    | LLM sampling temperature                                           |
-| `LLM_MAX_TOKENS`       | `800`                    | Maximum output tokens                                              |
-| `LLM_TIMEOUT`          | `120`                    | HTTP request timeout in seconds                                    |
-| `LLM_ANALYSIS_NUM_CTX` | (none)                   | If set, overrides `LLM_NUM_CTX` for analysis scripts               |
-| `LLM_ENDPOINT`         | (from `Get-LLMEndpoint`) | Ollama API URL                                                     |
+| `LLM_MODEL`            | (unset → falls back)     | Role-specific model. When unset, `Get-LLMModel` falls back to `LLM_DEFAULT_MODEL`, then to its hardcoded `qwen3-coder:30b` |
+| `LLM_DEFAULT_MODEL`    | `qwen3-coder:30b`        | Universal model fallback for every role-specific key                                                                       |
+| `LLM_TEMPERATURE`      | `0.1`                    | LLM sampling temperature                                                                                                   |
+| `LLM_MAX_TOKENS`       | `800`                    | Maximum output tokens                                                                                                      |
+| `LLM_TIMEOUT`          | `120`                    | HTTP request timeout in seconds                                                                                            |
+| `LLM_NUM_CTX`          | `0`                      | When `> 0`, switches `Invoke-LocalLLM` to Ollama-native `/api/chat` with `options.num_ctx`                                 |
+| `LLM_ANALYSIS_NUM_CTX` | (none)                   | When set, the script promotes this value into `LLM_NUM_CTX` before any LLM call                                            |
+| `LLM_ENDPOINT`         | (from `Get-LLMEndpoint`) | Ollama API URL (composed from `LLM_HOST`+`LLM_PORT` if absent)                                                             |
+| `LLM_THINK`            | `false`                  | When `true` and `LLM_NUM_CTX > 0`, enables reasoning-model thinking mode                                                   |
+| `LLM_SAVE_THINKING`    | `false`                  | Reserved — when wired in, writes thinking to `<doc>.thinking.md` sidecars                                                  |
 
 ## Exit Codes
 

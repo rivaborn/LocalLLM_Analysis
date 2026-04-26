@@ -29,19 +29,20 @@ Pass 1, it is fully incremental via SHA-1 hash tracking.
 ## Usage
 
 ```powershell
-.\archpass2_local.ps1 [-TargetDir <dir>] [-Clean] [-Only <paths>] [-Top <n>] [-ScoreOnly] [-EnvFile <path>]
+.\archpass2_local.ps1 [-TargetDir <dir>] [-Clean] [-Only <paths>] [-Top <n>] [-ScoreOnly] [-EnvFile <path>] [-RepoRoot <path>]
 ```
 
 ### CLI Options
 
-| Parameter    | Type   | Default          | Description                                                                          |
-| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------ |
-| `-TargetDir` | string | `"."`            | Subdirectory to scan (relative to repo root). `"."` scans the entire repo.           |
-| `-Clean`     | switch | off              | Remove all `.pass2.md` files and Pass 2 state before processing.                     |
-| `-Only`      | string | `""`             | Comma-separated list of specific relative file paths to process (bypasses scanning). |
-| `-Top`       | int    | `0`              | Process only the top N files ranked by significance score. `0` = process all.        |
-| `-ScoreOnly` | switch | off              | Print the ranked file list with scores and exit without running the LLM.             |
-| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` file.                                                             |
+| Parameter    | Type   | Default          | Description                                                                                                                                                                          |
+| ------------ | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir` | string | `"."`            | Subdirectory to scan (relative to repo root). `"."` scans the entire repo.                                                                                                           |
+| `-Clean`     | switch | off              | Remove all `.pass2.md` files and Pass 2 state before processing.                                                                                                                     |
+| `-Only`      | string | `""`             | Comma-separated list of specific relative file paths to process (bypasses scanning).                                                                                                 |
+| `-Top`       | int    | `0`              | Process only the top N files ranked by significance score. `0` = process all.                                                                                                        |
+| `-ScoreOnly` | switch | off              | Print the ranked file list with scores and exit without running the LLM.                                                                                                             |
+| `-EnvFile`   | string | `../Common/.env` | Alternative `.env` file.                                                                                                                                                             |
+| `-RepoRoot`  | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
 
 ## Scoring Algorithm
 
@@ -90,18 +91,21 @@ python Analysis/AnalysisPipeline.py
 
 ## Environment Variables / .env Keys
 
-| Key                    | Default             | Description                    |
-| ---------------------- | ------------------- | ------------------------------ |
-| `PRESET`               | `""`                | Named preset                   |
-| `INCLUDE_EXT_REGEX`    | Preset-dependent    | File extension include pattern |
-| `EXCLUDE_DIRS_REGEX`   | Preset-dependent    | Directory exclude pattern      |
-| `EXTRA_EXCLUDE_REGEX`  | `""`                | Additional exclude pattern     |
-| `CODEBASE_DESC`        | Preset-dependent    | Codebase description           |
-| `DEFAULT_FENCE`        | Preset-dependent    | Code fence language            |
-| `LLM_MODEL`            | `qwen2.5-coder:14b` | Ollama model                   |
-| `LLM_TEMPERATURE`      | `0.1`               | Sampling temperature           |
-| `LLM_TIMEOUT`          | `120`               | HTTP timeout in seconds        |
-| `LLM_ANALYSIS_NUM_CTX` | (none)              | Overrides `LLM_NUM_CTX` if set |
+| Key                    | Default                | Description                                                                                                  |
+| ---------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `PRESET`               | `""`                   | Named preset                                                                                                 |
+| `INCLUDE_EXT_REGEX`    | Preset-dependent       | File extension include pattern                                                                               |
+| `EXCLUDE_DIRS_REGEX`   | Preset-dependent       | Directory exclude pattern                                                                                    |
+| `EXTRA_EXCLUDE_REGEX`  | `""`                   | Additional exclude pattern                                                                                   |
+| `CODEBASE_DESC`        | Preset-dependent       | Codebase description                                                                                         |
+| `DEFAULT_FENCE`        | Preset-dependent       | Code fence language                                                                                          |
+| `LLM_MODEL`            | (unset → falls back)   | Resolved via `Get-LLMModel`: role-key → `LLM_DEFAULT_MODEL` → `qwen3-coder:30b`                              |
+| `LLM_DEFAULT_MODEL`    | `qwen3-coder:30b`      | Universal fallback when `LLM_MODEL` is blank                                                                 |
+| `LLM_TEMPERATURE`      | `0.1`                  | Sampling temperature                                                                                         |
+| `LLM_TIMEOUT`          | `120`                  | HTTP timeout in seconds                                                                                      |
+| `LLM_NUM_CTX`          | `0`                    | When `> 0`, switches to Ollama-native `/api/chat` with `options.num_ctx`                                     |
+| `LLM_ANALYSIS_NUM_CTX` | (none)                 | Promoted into `LLM_NUM_CTX` by the script before any LLM call                                                |
+| `LLM_THINK`            | `false`                | Reasoning-mode toggle (only effective when `LLM_NUM_CTX > 0`)                                                |
 
 ## Exit Codes
 

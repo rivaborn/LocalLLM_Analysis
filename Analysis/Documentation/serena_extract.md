@@ -30,25 +30,27 @@ loads as additional context when generating architecture docs.
 ```powershell
 .\serena_extract.ps1 [-TargetDir <dir>] [-Preset <name>] [-Jobs <n>] [-Workers <n>]
                      [-Force] [-SkipRefs] [-Compress] [-MinFreeRAM <GB>]
-                     [-RAMPerWorker <GB>] [-EnvFile <path>] [-ClangdPath <path>] [-Test]
+                     [-RAMPerWorker <GB>] [-EnvFile <path>] [-ClangdPath <path>]
+                     [-RepoRoot <path>] [-Test]
 ```
 
 ### CLI Options
 
-| Parameter       | Type   | Default          | Description                                                                            |
-| --------------- | ------ | ---------------- | -------------------------------------------------------------------------------------- |
-| `-TargetDir`    | string | `"."`            | Subdirectory to scan (relative to repo root)                                           |
-| `-Preset`       | string | `""`             | Named preset (`unreal`, `quake`, `generals`, etc.). Controls include/exclude patterns. |
-| `-Jobs`         | int    | `2`              | clangd `-j` parallelism per instance (background indexing threads)                     |
-| `-Workers`      | int    | `0`              | Max parallel clangd instances. `0` = auto-detect based on free RAM.                    |
-| `-Force`        | switch | off              | Re-extract all files even if context already exists                                    |
-| `-SkipRefs`     | switch | off              | Skip reference queries (much faster, symbols only -- no incoming references)           |
-| `-Compress`     | switch | off              | Compress LSP output: collapse class methods, show top symbols by count                 |
-| `-MinFreeRAM`   | double | `6.0`            | Minimum free RAM in GB to maintain during extraction                                   |
-| `-RAMPerWorker` | double | `5.0`            | Estimated RAM per clangd instance in GB (for auto-scaling)                             |
-| `-EnvFile`      | string | `../Common/.env` | Alternative `.env` file                                                                |
-| `-ClangdPath`   | string | `"clangd"`       | Path to clangd binary                                                                  |
-| `-Test`         | switch | off              | Run the built-in unit test suite (tests wrapper functions only, no clangd needed)      |
+| Parameter       | Type   | Default          | Description                                                                                                                                                                          |
+| --------------- | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-TargetDir`    | string | `"."`            | Subdirectory to scan (relative to repo root)                                                                                                                                         |
+| `-Preset`       | string | `""`             | Named preset (`unreal`, `quake`, `generals`, etc.). Controls include/exclude patterns.                                                                                               |
+| `-Jobs`         | int    | `2`              | clangd `-j` parallelism per instance (background indexing threads)                                                                                                                   |
+| `-Workers`      | int    | `0`              | Max parallel clangd instances. `0` = auto-detect based on free RAM.                                                                                                                  |
+| `-Force`        | switch | off              | Re-extract all files even if context already exists                                                                                                                                  |
+| `-SkipRefs`     | switch | off              | Skip reference queries (much faster, symbols only -- no incoming references)                                                                                                         |
+| `-Compress`     | switch | off              | Compress LSP output: collapse class methods, show top symbols by count                                                                                                               |
+| `-MinFreeRAM`   | double | `6.0`            | Minimum free RAM in GB to maintain during extraction                                                                                                                                 |
+| `-RAMPerWorker` | double | `5.0`            | Estimated RAM per clangd instance in GB (for auto-scaling)                                                                                                                           |
+| `-EnvFile`      | string | `../Common/.env` | Alternative `.env` file                                                                                                                                                              |
+| `-ClangdPath`   | string | `"clangd"`       | Path to clangd binary                                                                                                                                                                |
+| `-RepoRoot`     | string | `""` (auto)      | Override for the target repo root. When empty, auto-detects via CWD then `git rev-parse --show-toplevel`. `AnalysisPipeline.py` forwards `--repo-root` to every worker via this arg. |
+| `-Test`         | switch | off              | Run the built-in unit test suite (tests wrapper functions only, no clangd needed)                                                                                                    |
 
 ## How It Is Invoked
 
@@ -74,9 +76,9 @@ python Analysis/AnalysisPipeline.py
 
 ## Output Files
 
-| Output        | Location                                                    | Description          |
-| ------------- | ----------------------------------------------------------- | -------------------- |
-| Context files | `Analysis/.serena_context/<rel>.serena_context.txt` | Per-file LSP context |
+| Output        | Location                                                                | Description          |
+| ------------- | ----------------------------------------------------------------------- | -------------------- |
+| Context files | `<script_dir>/.serena_context/<rel>.serena_context.txt`                 | Per-file LSP context. `<script_dir>` is wherever this `.ps1` lives — typically `Analysis/`, but agnostic to folder name. |
 
 ## Environment Variables / .env Keys
 
@@ -88,12 +90,17 @@ python Analysis/AnalysisPipeline.py
 
 ## Supported Presets
 
+Resolved by `Get-Preset` from `../Common/file_helpers.ps1` (the same canonical preset list every analysis script uses). See `Common/Documentation/file_helpers.md` for the full table; the most common entries:
+
 | Preset names                                  | Include pattern                                                  | Key exclusions                                                                                                           |
 | --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `quake`, `quake2`, `quake3`, `doom`, `idtech` | `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, `.inl`, `.inc` | `.git`, `architecture`, `build`, `out`, `dist`, `obj`, `bin`, `baseq2`, `baseq3`, `base`                                 |
-| `unreal`, `ue4`, `ue5`                        | `.cpp`, `.h`, `.hpp`, `.cc`, `.cxx`, `.inl`                      | `.git`, `architecture`, `Binaries`, `Build`, `DerivedDataCache`, `Intermediate`, `Saved`, `ThirdParty`, `GeneratedFiles` |
-| `generals`, `cnc`, `sage`                     | `.cpp`, `.h`, `.hpp`, `.c`, `.cc`, `.cxx`, `.inl`, `.inc`        | `.git`, `architecture`, `Analysis`, `Dep`, `Debug`, `Release`                                                    |
-| (empty/default)                               | `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, `.inl`, `.inc` | `.git`, `architecture`, `build`, `out`, `dist`, `obj`, `bin`                                                             |
+| `unreal`, `ue4`, `ue5`                        | `.cpp`, `.h`, `.hpp`, `.cc`, `.cxx`, `.inl`, `.cs`               | `.git`, `architecture`, `Binaries`, `Build`, `DerivedDataCache`, `Intermediate`, `Saved`, `ThirdParty`, `GeneratedFiles` |
+| `generals`, `cnc`, `sage`                     | `.cpp`, `.h`, `.hpp`, `.c`, `.cc`, `.cxx`, `.inl`, `.inc`        | `.git`, `architecture`, `Debug`, `Release`, `x64`, `Win32`, `Run`, `place_steam_build_here`                              |
+| `python`, `py`                                | `.py`, `.toml`                                                   | `.git`, `architecture`, `__pycache__`, `.venv`, `venv`, `dist`, `build`, `.pytest_cache`, `.mypy_cache`                  |
+| (empty/default)                               | `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, `.inl`, `.inc`, `.cs`, `.java`, `.py`, `.rs`, `.lua`, etc. | `.git`, `architecture`, `build`, `out`, `dist`, `obj`, `bin`, `Library`, `Temp`, etc.                       |
+
+`.env`'s `INCLUDE_EXT_REGEX` and `EXCLUDE_DIRS_REGEX` override the preset's defaults if set.
 
 ## Exit Codes
 
