@@ -8,7 +8,7 @@
 # Prerequisites: Run archgen_local.ps1 first.
 #
 # Usage:
-#   .\ArchAnalysis\arch_overview_local.ps1 [-TargetDir <dir>] [-Single] [-Clean] [-Full]
+#   .\Analysis\arch_overview_local.ps1 [-TargetDir <dir>] [-Single] [-Clean] [-Full]
 # ============================================================
 
 [CmdletBinding()]
@@ -17,37 +17,48 @@ param(
     [switch]$Single,
     [switch]$Clean,
     [switch]$Full,
-    [string]$EnvFile   = ""
+    [string]$EnvFile   = "",
+    [string]$RepoRoot  = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-if ($EnvFile -eq "") { $EnvFile = Join-Path $PSScriptRoot '.env' }
+if ($EnvFile -eq "") { $EnvFile = Join-Path $PSScriptRoot '..\Common\.env' }
 
 # ── Load shared module ───────────────────────────────────────
 
-. (Join-Path $PSScriptRoot 'llm_common.ps1')
+. (Join-Path $PSScriptRoot '..\Common\llm_common.ps1')
 
 # ── Load config ──────────────────────────────────────────────
 
 $script:cfg = Read-EnvFile $EnvFile
 
+# Promote Analysis-specific context window into LLM_NUM_CTX so Invoke-LocalLLM's
+# auto-read picks it up without any callsite changes.
+if ($script:cfg.ContainsKey('LLM_ANALYSIS_NUM_CTX') -and $script:cfg['LLM_ANALYSIS_NUM_CTX'] -ne '') {
+    $script:cfg['LLM_NUM_CTX'] = $script:cfg['LLM_ANALYSIS_NUM_CTX']
+}
+
 $codebaseDesc   = Cfg 'CODEBASE_DESC' 'game engine / game codebase'
 $chunkThreshold = [int](Cfg 'CHUNK_THRESHOLD' '400')
 
 $llmEndpoint    = Get-LLMEndpoint
-$llmModel       = Cfg 'LLM_MODEL'       'qwen2.5-coder:14b'
+$llmModel       = Get-LLMModel -RoleKey 'LLM_MODEL'
 $llmTemperature = [double](Cfg 'LLM_TEMPERATURE' '0.1')
 $llmTimeout     = [int](Cfg 'LLM_TIMEOUT'        '120')
 
 # ── Paths ────────────────────────────────────────────────────
 
-$repoRoot = (Get-Location).Path
-try {
-    $g = & git rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -eq 0 -and $g) { $repoRoot = $g.Trim() }
-} catch {}
+if ($RepoRoot -ne "") {
+    $repoRoot = (Resolve-Path $RepoRoot).Path
+} else {
+    $repoRoot = (Get-Location).Path
+    try {
+        $g = & git rev-parse --show-toplevel 2>$null
+        if ($LASTEXITCODE -eq 0 -and $g) { $repoRoot = $g.Trim() }
+    } catch {}
+}
 
 $archDir  = Join-Path $repoRoot 'architecture'
 $stateDir = Join-Path $archDir  '.overview_state'
@@ -197,6 +208,8 @@ Write-Host "Per-file docs:  $docCount"
 Write-Host "Summary lines:  $summaryLines (threshold: $chunkThreshold)"
 Write-Host "Output:         $outArch"
 Write-Host ''
+Write-Host 'Press Ctrl+Q to cancel (checked between subsystems).' -ForegroundColor DarkGray
+Write-Host ''
 
 if ($docCount -eq 0) {
     Write-Host "No per-file docs found. Run archgen_local.ps1 first." -ForegroundColor Red
@@ -250,6 +263,7 @@ else {
     $idx = 0
 
     foreach ($sub in $subsystems) {
+        Test-CancelKey
         $idx++
         $subPath = if ($sub -eq '.') { $docRoot } else { Join-Path $docRoot $sub }
         if (-not (Test-Path $subPath)) { continue }

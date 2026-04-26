@@ -46,15 +46,26 @@ PIPELINE_STEPS = [
 ]
 
 def get_script_dir() -> Path:
-    """Return the directory containing this script (and .env)."""
-    script_dir = Path(__file__).resolve().parent
-    if not (script_dir / ".env").exists():
-        raise FileNotFoundError(f".env not found at {script_dir}")
-    return script_dir
+    """Return the directory containing this script (Analysis/)."""
+    return Path(__file__).resolve().parent
 
-def get_repo_root(script_dir: Path) -> Path:
-    """Return the repository root (parent of ArchAnalysis/)."""
-    return script_dir.parent
+def get_env_path(script_dir: Path) -> Path:
+    """Return the path to .env in the sibling Common/ folder."""
+    env_path = script_dir.parent / "Common" / ".env"
+    if not env_path.exists():
+        raise FileNotFoundError(f".env not found at {env_path}")
+    return env_path
+
+def get_repo_root(override: str | None = None) -> Path:
+    """Return the target repository root.
+
+    If --repo-root is passed on the CLI it wins. Otherwise defaults to CWD,
+    matching the convention of the PS1 worker scripts (they auto-detect via
+    CWD + git fallback when no -RepoRoot is provided).
+    """
+    if override:
+        return Path(override).resolve()
+    return Path.cwd()
 
 def parse_subsections(env_path: Path) -> list[str]:
     with open(env_path, 'r') as f:
@@ -98,18 +109,19 @@ def setup_logging(log_path: Path) -> logging.Logger:
     
     return logger
 
-def build_command(step: PipelineStep, subsection: str | None, script_dir: Path) -> list[str]:
+def build_command(step: PipelineStep, subsection: str | None, script_dir: Path, repo_root: Path) -> list[str]:
     script_path = script_dir / step.script
     if step.is_powershell:
-        cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)]
+        cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path),
+               "-RepoRoot", str(repo_root)]
     else:
-        cmd = [sys.executable, str(script_path)]
-    
+        cmd = [sys.executable, str(script_path), "--repo-root", str(repo_root)]
+
     if step.use_target_dir and subsection is not None:
         cmd.extend(["-TargetDir", subsection])
-    
+
     cmd.extend(step.args)
-    
+
     return cmd
 
 def run_command(cmd: list[str], repo_root: Path, logger: logging.Logger, dry_run: bool = False) -> None:
@@ -201,9 +213,12 @@ def run_one_time_steps(script_dir: Path, repo_root: Path, logger: logging.Logger
     logger.info("=== One-time setup steps ===")
 
     cprint("  >> generate_compile_commands.py", Color.BLUE)
-    run_command([sys.executable, str(script_dir / "generate_compile_commands.py")], repo_root, logger, dry_run)
+    run_command([sys.executable, str(script_dir / "generate_compile_commands.py"),
+                 "--repo-root", str(repo_root)], repo_root, logger, dry_run)
     cprint("  >> serena_extract.ps1", Color.BLUE)
-    run_command(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_dir / "serena_extract.ps1")], repo_root, logger, dry_run)
+    run_command(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                 str(script_dir / "serena_extract.ps1"),
+                 "-RepoRoot", str(repo_root)], repo_root, logger, dry_run)
 
 def run_pipeline(script_dir: Path, repo_root: Path, subsections: list[str], logger: logging.Logger, dry_run: bool = False, start_from: int = 1) -> None:
     total = len(subsections)
@@ -230,7 +245,7 @@ def run_pipeline(script_dir: Path, repo_root: Path, subsections: list[str], logg
             color = step_colors[(step_idx - 1) % len(step_colors)]
             cprint(f"  --- Step {step_idx}/{len(PIPELINE_STEPS)}: {step.name} ---", color + Color.BOLD)
             logger.info(f"  Step {step_idx}/{len(PIPELINE_STEPS)}: {step.name}")
-            cmd = build_command(step, subsection, script_dir)
+            cmd = build_command(step, subsection, script_dir, repo_root)
             run_command(cmd, repo_root, logger, dry_run)
 
         cprint(f"  >> Renaming architecture/ -> {i}. {sanitize_subsection_name(subsection)}", Color.MAGENTA)
@@ -246,26 +261,33 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--start-from", type=int, default=1)
     parser.add_argument("--skip-lsp", action="store_true")
-    
+    parser.add_argument("--repo-root", type=str, default=None,
+                        help="Target repo root (defaults to CWD). Forwarded to every worker via -RepoRoot / --repo-root.")
+
     args = parser.parse_args(argv)
-    
+
     if args.start_from < 1:
         parser.error("--start-from must be >= 1")
-    
+
     return args
 
 def main() -> None:
     args = parse_args()
     script_dir = get_script_dir()
-    repo_root = get_repo_root(script_dir)
+    env_path = get_env_path(script_dir)
+    repo_root = get_repo_root(args.repo_root)
     logger = setup_logging(script_dir / "pipeline.log")
     cprint("=" * 60, Color.CYAN)
     cprint(f"  ARCHITECTURE PIPELINE", Color.CYAN + Color.BOLD)
     cprint(f"  Started at {datetime.datetime.now():%Y-%m-%d %H:%M:%S}", Color.CYAN)
+    cprint(f"  Repo root: {repo_root}", Color.CYAN)
+    cprint(f"  Env file:  {env_path}", Color.CYAN)
     cprint("=" * 60, Color.CYAN)
     logger.info(f"Pipeline started at {datetime.datetime.now()}")
+    logger.info(f"Repo root: {repo_root}")
+    logger.info(f"Env file:  {env_path}")
 
-    subsections = parse_subsections(script_dir / ".env")
+    subsections = parse_subsections(env_path)
 
     if len(subsections) == 0:
         cprint("ERROR: No subsections found in .env", Color.RED)

@@ -1,138 +1,26 @@
 # ============================================================
-# llm_common.ps1 -- Shared helper module for local LLM pipeline
+# file_helpers.ps1 -- File processing, presets, and display helpers
 #
-# Dot-source this file from any local LLM script:
-#   . (Join-Path $PSScriptRoot 'llm_common.ps1')
-#
-# Provides:
-#   Invoke-LocalLLM    - Call Ollama OpenAI-compatible API
-#   Get-LLMEndpoint    - Build endpoint URL from LLM_HOST + LLM_PORT
-#   Read-EnvFile       - Parse .env key=value files
-#   Get-SHA1           - SHA1 hash of a file
-#   Get-Preset         - Engine preset definitions
-#   Get-FenceLang      - Map file extension to markdown fence language
-#   Test-TrivialFile   - Detect generated/trivial files
-#   Write-TrivialStub  - Write a stub doc for trivial files
-#   Get-OutputBudget   - Adaptive output token budget
+# Location: LocalLLM_Pipeline/Common/file_helpers.ps1
+# Split from llm_common.ps1. Contains:
+#   Get-SHA1            - SHA1 hash of a file
+#   Get-Preset          - Engine preset definitions (file patterns)
+#   Get-FenceLang       - Map file extension to markdown fence language
+#   Test-TrivialFile    - Detect generated/trivial files
+#   Write-TrivialStub   - Write a stub doc for trivial files
+#   Get-OutputBudget    - Adaptive output token budget
+#   Truncate-Source     - Head+tail source truncation
+#   Resolve-ArchFile    - Find file under ARCHITECTURE_DIR
+#   Get-SerenaContextDir- Resolve SERENA_CONTEXT_DIR
+#   Load-CompressedLSP  - Load LSP context (Symbol Overview only)
+#   Show-SimpleProgress - Single-line progress display
 # ============================================================
-
-# ---------------------------------------------------------------------------
-# Get-LLMEndpoint -- Build endpoint URL from LLM_HOST + LLM_PORT in .env
-# ---------------------------------------------------------------------------
-
-function Get-LLMEndpoint {
-    $host_ = Cfg 'LLM_HOST' '192.168.1.126'
-    $port  = Cfg 'LLM_PORT' '11434'
-    return "http://${host_}:${port}"
-}
-
-# ---------------------------------------------------------------------------
-# Invoke-LocalLLM -- Call Ollama via OpenAI-compatible chat completions API
-# ---------------------------------------------------------------------------
-
-function Invoke-LocalLLM {
-    param(
-        [string]$SystemPrompt,
-        [string]$UserPrompt,
-        [string]$Endpoint    = '',
-        [string]$Model       = 'qwen2.5-coder:14b',
-        [double]$Temperature = 0.1,
-        [int]   $MaxTokens   = 800,
-        [int]   $Timeout     = 120,
-        [int]   $MaxRetries  = 3,
-        [int]   $RetryDelay  = 5
-    )
-
-    if (-not $Endpoint -or $Endpoint -eq '') {
-        $Endpoint = Get-LLMEndpoint
-    }
-    $uri = "$Endpoint/v1/chat/completions"
-
-    $messages = @()
-    if ($SystemPrompt -and $SystemPrompt.Trim() -ne '') {
-        $messages += @{ role = 'system'; content = $SystemPrompt }
-    }
-    $messages += @{ role = 'user'; content = $UserPrompt }
-
-    $body = @{
-        model       = $Model
-        messages    = $messages
-        stream      = $false
-        temperature = $Temperature
-        max_tokens  = $MaxTokens
-    } | ConvertTo-Json -Depth 5
-
-    $attempt = 0
-    while ($true) {
-        $attempt++
-        try {
-            $resp = Invoke-RestMethod -Uri $uri `
-                -Method Post `
-                -ContentType 'application/json; charset=utf-8' `
-                -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) `
-                -TimeoutSec $Timeout `
-                -ErrorAction Stop
-
-            $output = $resp.choices[0].message.content
-            if (-not $output -or $output.Trim() -eq '') {
-                throw "Empty response from LLM"
-            }
-            return $output.Trim()
-        }
-        catch {
-            if ($attempt -ge $MaxRetries) {
-                throw "LLM call failed after $MaxRetries attempts: $($_.Exception.Message)"
-            }
-            Write-Host "  [retry $attempt/$MaxRetries] $($_.Exception.Message)" -ForegroundColor Yellow
-            Start-Sleep -Seconds $RetryDelay
-        }
-    }
-}
-
-# ---------------------------------------------------------------------------
-# Read-EnvFile -- Parse a .env file into a hashtable
-# ---------------------------------------------------------------------------
-
-function Read-EnvFile($path) {
-    $vars = @{}
-    if (Test-Path $path) {
-        Get-Content $path | ForEach-Object {
-            $line = $_.Trim()
-            if ($line -match '^#' -or $line -eq '') { return }
-            if ($line -match '^([^=]+)=(.*)$') {
-                $key = $Matches[1].Trim()
-                $val = $Matches[2].Trim().Trim('"').Trim("'")
-                $val = $val -replace [regex]::Escape('$HOME'), $env:USERPROFILE
-                $val = $val -replace '^~', $env:USERPROFILE
-                $vars[$key] = $val
-            }
-        }
-    }
-    return $vars
-}
-
-# ---------------------------------------------------------------------------
-# Cfg -- Read a config key with a default fallback
-# ---------------------------------------------------------------------------
-
-function Cfg($key, $default = '') {
-    if ($script:cfg.ContainsKey($key) -and $script:cfg[$key] -ne '') { return $script:cfg[$key] }
-    return $default
-}
-
-# ---------------------------------------------------------------------------
-# Get-SHA1 -- SHA1 hash of a file (for incremental skip logic)
-# ---------------------------------------------------------------------------
 
 function Get-SHA1($filePath) {
     $sha   = [System.Security.Cryptography.SHA1]::Create()
     $bytes = [System.IO.File]::ReadAllBytes($filePath)
     return ($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') }) -join ''
 }
-
-# ---------------------------------------------------------------------------
-# Get-Preset -- Engine preset definitions (include/exclude patterns)
-# ---------------------------------------------------------------------------
 
 function Get-Preset($name) {
     switch ($name.ToLower()) {
@@ -184,6 +72,14 @@ function Get-Preset($name) {
                 Fence   = 'rust'
             }
         }
+        { $_ -in @('python','py') } {
+            return @{
+                Include = '\.(py|toml)$'
+                Exclude = '[/\\](\.git|architecture|__pycache__|\.egg-info|\.tox|\.venv|venv|dist|build|\.pytest_cache|\.mypy_cache)([/\\]|$)'
+                Desc    = 'Python codebase'
+                Fence   = 'python'
+            }
+        }
         { $_ -in @('generals','cnc','sage') } {
             return @{
                 Include = '\.(cpp|h|hpp|c|cc|cxx|inl|inc)$'
@@ -201,15 +97,11 @@ function Get-Preset($name) {
             }
         }
         default {
-            Write-Host "Unknown preset: $name. Available: quake, doom, unreal, godot, unity, source, rust, generals" -ForegroundColor Red
+            Write-Host "Unknown preset: $name. Available: quake, doom, unreal, godot, unity, source, rust, generals, python" -ForegroundColor Red
             exit 2
         }
     }
 }
-
-# ---------------------------------------------------------------------------
-# Get-FenceLang -- Map file extension to markdown fence language
-# ---------------------------------------------------------------------------
 
 function Get-FenceLang($file, $def) {
     $ext = [System.IO.Path]::GetExtension($file).TrimStart('.').ToLower()
@@ -230,10 +122,6 @@ function Get-FenceLang($file, $def) {
         default  { return $def }
     }
 }
-
-# ---------------------------------------------------------------------------
-# Trivial file detection
-# ---------------------------------------------------------------------------
 
 $script:trivialPatterns = @(
     '\.generated\.h$',
@@ -262,20 +150,12 @@ function Write-TrivialStub($rel, $outPath) {
     $stub | Set-Content -Path $outPath -Encoding UTF8
 }
 
-# ---------------------------------------------------------------------------
-# Get-OutputBudget -- Adaptive output token budget based on file size
-# ---------------------------------------------------------------------------
-
 function Get-OutputBudget($lineCount) {
     if ($lineCount -lt 50)  { return 300 }
     if ($lineCount -lt 200) { return 400 }
     if ($lineCount -lt 500) { return 600 }
     return 800
 }
-
-# ---------------------------------------------------------------------------
-# Truncate-Source -- Cap source lines with head+tail truncation
-# ---------------------------------------------------------------------------
 
 function Truncate-Source($srcLines, $maxLines) {
     if ($maxLines -le 0 -or $srcLines.Count -le $maxLines) {
@@ -288,9 +168,37 @@ function Truncate-Source($srcLines, $maxLines) {
     return ($head -join "`n") + "`n`n$note`n`n" + ($tail -join "`n")
 }
 
-# ---------------------------------------------------------------------------
-# Load-CompressedLSP -- Load LSP context, keeping only Symbol Overview section
-# ---------------------------------------------------------------------------
+function Resolve-ArchFile {
+    param(
+        [string]$Name,
+        [string]$BaseDir = ''
+    )
+    $archDir = Cfg 'ARCHITECTURE_DIR' ''
+    if (-not $archDir) { return '' }
+    if (-not $BaseDir) { $BaseDir = (Get-Location).Path }
+
+    if ([System.IO.Path]::IsPathRooted($archDir)) {
+        $candidate = Join-Path $archDir $Name
+    } else {
+        $candidate = Join-Path (Join-Path $BaseDir $archDir) $Name
+    }
+    if (Test-Path $candidate -PathType Leaf) {
+        return (Resolve-Path $candidate).Path
+    }
+    return ''
+}
+
+function Get-SerenaContextDir {
+    param([string]$BaseDir = '')
+    $d = Cfg 'SERENA_CONTEXT_DIR' ''
+    if (-not $d) { return '' }
+    if (-not $BaseDir) { $BaseDir = (Get-Location).Path }
+    if (-not [System.IO.Path]::IsPathRooted($d)) {
+        $d = Join-Path $BaseDir $d
+    }
+    if (Test-Path $d -PathType Container) { return $d }
+    return ''
+}
 
 function Load-CompressedLSP($serenaContextDir, $rel) {
     if (-not $serenaContextDir -or $serenaContextDir -eq '') { return '' }
@@ -300,17 +208,12 @@ function Load-CompressedLSP($serenaContextDir, $rel) {
     $content = Get-Content $ctxPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
     if (-not $content) { return '' }
 
-    # Extract only Symbol Overview section (drop references, trimmed source to save tokens)
     $match = [regex]::Match($content, '(?s)(## Symbol Overview.*?)(?=\n## (?!Symbol)|$)')
     if ($match.Success) {
         return $match.Groups[1].Value.Trim()
     }
     return ''
 }
-
-# ---------------------------------------------------------------------------
-# Show-SimpleProgress -- Single-line progress display for synchronous loop
-# ---------------------------------------------------------------------------
 
 function Show-SimpleProgress($done, $total, $startTime) {
     $elapsed = ([datetime]::Now - $startTime).TotalSeconds
